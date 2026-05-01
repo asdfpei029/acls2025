@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ACLS 2025">
+<meta name="theme-color" content="#1a1a2e">
+<title>ACLS 2025 臨床快查</title>
+<style>
+:root{--bg:#f8f9fc;--bg2:#ffffff;--bg3:#f0f2f7;--text:#1a1a2e;--text2:#555770;--text3:#8889a0;--border:#e2e4ef;--primary:#2563eb;--primary-bg:#eff6ff;--primary-text:#1d4ed8;--danger:#dc2626;--danger-bg:#fef2f2;--danger-text:#b91c1c;--success:#16a34a;--success-bg:#f0fdf4;--success-text:#15803d;--warning:#d97706;--warning-bg:#fffbeb;--warning-text:#b45309;--purple:#7c3aed;--purple-bg:#f5f3ff;--purple-text:#6d28d9;--nav-h:64px;--safe-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,'Helvetica Neue',Arial,sans-serif}
+body{overflow:hidden}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+#header{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 16px 10px;flex-shrink:0}
+#header-title{font-size:17px;font-weight:600;color:var(--text)}
+#header-sub{font-size:12px;color:var(--text3);margin-top:1px}
+#search-wrap{padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;position:relative}
+#search-wrap input{width:100%;padding:9px 14px 9px 36px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;background:var(--bg3);color:var(--text);outline:none;-webkit-appearance:none}
+#search-wrap input:focus{border-color:var(--primary);background:var(--bg2)}
+.search-icon{position:absolute;left:27px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:16px;pointer-events:none}
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 8px)}
+#nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + var(--safe-bottom));background:var(--bg2);border-top:1px solid var(--border);display:flex;padding-bottom:var(--safe-bottom);z-index:100}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:6px 0;border:none;background:none;color:var(--text3);font-size:10px;font-weight:500;transition:color 0.15s}
+.nav-item.active{color:var(--primary)}
+.nav-icon{font-size:22px;line-height:1}
+.section{display:none;padding:16px}
+.section.active{display:block}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;margin-bottom:12px;overflow:hidden}
+.card-body{padding:14px 16px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;padding:7px 8px;font-size:11px;font-weight:600;color:var(--text2);background:var(--bg3);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.03em}
+.tbl td{padding:8px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top;line-height:1.5}
+.tbl tr:last-child td{border-bottom:none}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:100px;margin:2px}
+.badge-red{background:var(--danger-bg);color:var(--danger-text)}
+.badge-blue{background:var(--primary-bg);color:var(--primary-text)}
+.badge-green{background:var(--success-bg);color:var(--success-text)}
+.badge-yellow{background:var(--warning-bg);color:var(--warning-text)}
+.badge-purple{background:var(--purple-bg);color:var(--purple-text)}
+.alert{padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.6;margin-bottom:8px}
+.alert-red{background:var(--danger-bg);color:var(--danger-text);border-left:3px solid var(--danger)}
+.alert-blue{background:var(--primary-bg);color:var(--primary-text);border-left:3px solid var(--primary)}
+.alert-green{background:var(--success-bg);color:var(--success-text);border-left:3px solid var(--success)}
+.alert-yellow{background:var(--warning-bg);color:var(--warning-text);border-left:3px solid var(--warning)}
+.alert-purple{background:var(--purple-bg);color:var(--purple-text);border-left:3px solid var(--purple)}
+.flow-step{border-radius:10px;padding:10px 14px;margin-bottom:4px;font-size:13px;line-height:1.6}
+.flow-step.neutral{background:var(--bg3);border:1px solid var(--border)}
+.flow-step.action{background:var(--primary-bg);border:1px solid #bfdbfe;color:var(--primary-text)}
+.flow-step.danger{background:var(--danger-bg);border:1px solid #fecaca;color:var(--danger-text)}
+.flow-step.decision{background:var(--warning-bg);border:1px solid #fde68a;color:var(--warning-text)}
+.flow-step.success{background:var(--success-bg);border:1px solid #bbf7d0;color:var(--success-text)}
+.flow-arrow{text-align:center;color:var(--text3);font-size:18px;margin:1px 0;line-height:1}
+.flow-label{font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.drug-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.drug-item-header{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.drug-name{font-size:15px;font-weight:600}
+.drug-sub{font-size:12px;color:var(--text2);margin-top:1px}
+.drug-body{padding:0 16px 14px;display:none}
+.drug-body.open{display:block}
+.dose-calc{background:var(--bg3);border-radius:10px;padding:14px;margin-top:10px}
+.dose-calc label{font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px}
+.dose-calc-row{display:flex;gap:8px;align-items:center}
+.dose-calc input[type=number]{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:15px;background:var(--bg2);color:var(--text);outline:none;-webkit-appearance:none}
+.dose-calc input[type=number]:focus{border-color:var(--primary)}
+.dose-calc-btn{padding:9px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+.dose-result{margin-top:10px;padding:10px 12px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);font-size:14px;display:none}
+.dose-result.show{display:block}
+.dose-result-item{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)}
+.dose-result-item:last-child{border-bottom:none}
+.dose-result-label{color:var(--text2);font-size:13px}
+.dose-result-val{font-weight:600;color:var(--primary);font-size:14px}
+.shock-card{background:var(--danger-bg);border:1.5px solid #fecaca;border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.shock-title{font-size:14px;font-weight:700;color:var(--danger-text);margin-bottom:8px}
+.shock-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #fecaca;font-size:13px}
+.shock-row:last-child{border-bottom:none}
+.shock-rhythm{color:var(--text2)}
+.shock-energy{font-weight:700;color:var(--danger);font-size:15px}
+.exam-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;line-height:1.6}
+.exam-item:last-child{border-bottom:none}
+.exam-num{min-width:26px;height:26px;border-radius:50%;background:var(--danger-bg);color:var(--danger-text);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.search-result-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer}
+.search-result-tag{font-size:11px;font-weight:600;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.search-result-title{font-size:14px;font-weight:600;margin-bottom:3px}
+.search-result-snippet{font-size:12px;color:var(--text2);line-height:1.5}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3);font-size:14px}
+.sec-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin:16px 0 8px}
+.sec-label:first-child{margin-top:0}
+.tab-bar{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab-btn{padding:7px 14px;border-radius:20px;font-size:13px;font-weight:500;border:1.5px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.home-tile{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px 14px;cursor:pointer;text-align:center}
+.home-tile-icon{font-size:28px;margin-bottom:6px}
+.home-tile-label{font-size:13px;font-weight:600;color:var(--text)}
+.home-tile-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.subsec-title{font-size:16px;font-weight:700;color:var(--text);margin:16px 0 10px}
+.subsec-title:first-child{margin-top:0}
+.mnemo-box{background:var(--purple-bg);border:1.5px solid var(--purple);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.mnemo-title{font-size:12px;font-weight:700;color:var(--purple-text);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.mnemo-text{font-size:14px;color:var(--purple-text);line-height:1.7;font-weight:500}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div id="header-title">ACLS 2025 臨床快查</div>
+    <div id="header-sub">依據 2025 AHA Guidelines｜整合版</div>
+  </div>
+  <div id="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="搜尋藥物、心律、口訣、數字..." autocomplete="off" oninput="handleSearch(this.value)">
+  </div>
+  <div id="content">
+
+    <!-- HOME -->
+    <div class="section active" id="sec-home">
+      <div class="home-grid">
+        <div class="home-tile" onclick="goTo('sec-flow')"><div class="home-tile-icon">⚡</div><div class="home-tile-label">急救流程</div><div class="home-tile-sub">5 條算法</div></div>
+        <div class="home-tile" onclick="goTo('sec-drug')"><div class="home-tile-icon">💊</div><div class="home-tile-label">藥物速查</div><div class="home-tile-sub">20 種 + 劑量計算</div></div>
+        <div class="home-tile" onclick="goTo('sec-shock')"><div class="home-tile-icon">⚡️</div><div class="home-tile-label">電擊劑量</div><div class="home-tile-sub">去顫 / 同步電擊</div></div>
+        <div class="home-tile" onclick="goTo('sec-kb')"><div class="home-tile-icon">📖</div><div class="home-tile-label">知識庫</div><div class="home-tile-sub">心律、特殊情況等</div></div>
+        <div class="home-tile" onclick="goTo('sec-exam')"><div class="home-tile-icon">✅</div><div class="home-tile-label">考試考點</div><div class="home-tile-sub">數字 + 陷阱 + 情境</div></div>
+        <div class="home-tile" onclick="goTo('sec-mnemo')"><div class="home-tile-icon">🧠</div><div class="home-tile-label">口訣速查</div><div class="home-tile-sub">考前濃縮版</div></div>
+      </div>
+      <div class="sec-label">高品質 CPR 核心數字</div>
+      <div class="card"><div class="card-body">
+        <table class="tbl">
+          <tr><th>項目</th><th>標準</th><th>臨床重點</th></tr>
+          <tr><td>按壓速率</td><td><strong>100–120 次/分</strong></td><td>&gt;120 深度不足；&lt;100 灌流差</td></tr>
+          <tr><td>成人深度</td><td><strong>5–6 cm</strong></td><td>過深→肋骨骨折；過淺→灌流差</td></tr>
+          <tr><td>兒童深度</td><td><strong>5 cm</strong> 或胸廓前後徑1/3</td><td></td></tr>
+          <tr><td>嬰兒深度</td><td><strong>4 cm</strong> 或胸廓前後徑1/3</td><td></td></tr>
+          <tr><td>中斷上限</td><td><strong>&lt;10 秒</strong></td><td>CCF 目標 &gt;80%</td></tr>
+          <tr><td>無進階呼吸道</td><td><strong>30:2</strong>（醫護小兒 15:2）</td><td>5循環≈2分鐘</td></tr>
+          <tr><td>插管後換氣</td><td><strong>10次/分</strong>（每6秒）</td><td>不中斷按壓</td></tr>
+          <tr><td>換壓胸者</td><td>每 <strong>2 分鐘</strong></td><td>和分析節律同步</td></tr>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- FLOW -->
+    <div class="section" id="sec-flow">
+      <div class="tab-bar" id="flowTabs">
+        <button class="tab-btn active" onclick="showFlow('vf',this)">VF / pVT</button>
+        <button class="tab-btn" onclick="showFlow('pea',this)">PEA / Asystole</button>
+        <button class="tab-btn" onclick="showFlow('brady',this)">心搏過緩</button>
+        <button class="tab-btn" onclick="showFlow('tachy',this)">心搏過速</button>
+        <button class="tab-btn" onclick="showFlow('rosc',this)">ROSC 後照護</button>
+      </div>
+      <div id="flowContent"></div>
+    </div>
+
+    <!-- DRUG -->
+    <div class="section" id="sec-drug">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="filterDrugs('all',this)">全部</button>
+        <button class="tab-btn" onclick="filterDrugs('arrest',this)">心跳停止</button>
+        <button class="tab-btn" onclick="filterDrugs('rhythm',this)">心律控制</button>
+        <button class="tab-btn" onclick="filterDrugs('acs',this)">ACS</button>
+        <button class="tab-btn" onclick="filterDrugs('stroke',this)">Stroke</button>
+        <button class="tab-btn" onclick="filterDrugs('shock',this)">休克/升壓</button>
+      </div>
+      <div id="drugList"></div>
+    </div>
+
+    <!-- SHOCK -->
+    <div class="section" id="sec-shock">
+      <div class="sec-label">去顫（Defibrillation）— 不同步</div>
+      <div class="shock-card">
+        <div class="shock-title">⚡ 去顫能量</div>
+        <div class="shock-row"><span class="shock-rhythm">VF / pulseless VT — 雙相波</span><span class="shock-energy">120–200 J（不確定→200 J）</span></div>
+        <div class="shock-row"><span class="shock-rhythm">VF / pulseless VT — 單相波</span><span class="shock-energy">360 J（固定）</span></div>
+        <div class="shock-row"><span class="shock-rhythm">WPW + AF（不規則寬 QRS）</span><span class="shock-energy">200 J（高能量去顫）</span></div>
+        <div class="shock-row"><span class="shock-rhythm">Torsades（不規則寬 QRS）</span><span class="shock-energy">去顫劑量（先給 Mg 2g）</span></div>
+        <div class="shock-row"><span class="shock-rhythm">AED</span><span class="shock-energy">自動選擇</span></div>
+      </div>
+      <div class="alert alert-red">去顫後<strong>立即繼續 CPR，不要摸脈搏！</strong> 2分鐘後再分析節律。</div>
+
+      <div class="sec-label">同步電擊（Synchronized Cardioversion）</div>
+      <div class="card"><div class="card-body">
+        <table class="tbl">
+          <tr><th>心律</th><th>建議能量（雙相波）</th></tr>
+          <tr><td>有脈搏不穩定單型 VT</td><td><strong>100 J</strong>（可升至200/300/360 J）</td></tr>
+          <tr><td>SVT 不穩定（規則窄 QRS）</td><td><strong>50–100 J</strong></td></tr>
+          <tr><td>AF（心房顫動）不穩定</td><td><strong>120–200 J</strong></td></tr>
+          <tr><td>Atrial Flutter 不穩定</td><td><strong>200 J</strong></td></tr>
+        </table>
+      </div></div>
+      <div class="mnemo-box"><div class="mnemo-title">★ 口訣</div><div class="mnemo-text">有脈同步，無脈去顫；VT 同步從 100 J 起；不規則寬→一律去顫劑量</div></div>
+      <div class="alert alert-yellow">意識清醒：先鎮靜再電擊。病情極危急無法鎮靜：仍應立即電擊。</div>
+
+      <div class="sec-label">電極位置</div>
+      <div class="card"><div class="card-body">
+        <table class="tbl">
+          <tr><th>位置</th><th>說明</th><th>用途</th></tr>
+          <tr><td>前-側</td><td>右鎖骨下 + 左腋中線</td><td>最常用</td></tr>
+          <tr><td>前-後</td><td>前胸中央 + 左後肩胛下</td><td>心房電擊常用</td></tr>
+        </table>
+        <div class="alert alert-blue" style="margin-top:10px;margin-bottom:0">起搏器/ICD 距裝置 &gt;8 cm｜手動電擊板壓力約 25 磅（11 kg）</div>
+      </div></div>
+
+      <div class="sec-label">AED 特殊情境</div>
+      <div class="card"><div class="card-body">
+        <table class="tbl">
+          <tr><th>情境</th><th>處置</th></tr>
+          <tr><td>電擊後</td><td>立刻 CPR 2分鐘，<strong>不要立刻摸脈搏</strong></td></tr>
+          <tr><td>AED 顯示不建議電擊</td><td>立刻 CPR 2分鐘再分析</td></tr>
+          <tr><td>ICD 正在放電</td><td>等 30–60 秒待 ICD 完成再貼 AED</td></tr>
+          <tr><td>溺水病患</td><td>先擦乾胸部再電擊</td></tr>
+          <tr><td>有藥物貼片</td><td>先移除再電擊</td></tr>
+          <tr><td>心臟植入物</td><td>貼片距植入物 &gt;8 cm</td></tr>
+          <tr><td>1–8 歲兒童無兒童 AED</td><td>可使用成人型 AED</td></tr>
+        </table>
+      </div></div>
+
+      <div class="sec-label">經皮心律起搏（TCP）</div>
+      <div class="card"><div class="card-body">
+        <table class="tbl">
+          <tr><th>項目</th><th>說明</th></tr>
+          <tr><td>適應症</td><td>Atropine 無效；Mobitz II；Complete AV Block</td></tr>
+          <tr><td>起始頻率</td><td><strong>60–80 bpm</strong>（通常從70開始）</td></tr>
+          <tr><td>確認 Capture</td><td>QRS 後寬大波形 + T 波；確認血壓上升（機械性 capture）</td></tr>
+          <tr><td>疼痛管理</td><td>TCP 不舒服，需鎮痛 ± 鎮靜</td></tr>
+          <tr><td>注意</td><td>Asystole/PEA → 不建議 TCP（研究證實效果不佳）</td></tr>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- KB -->
+    <div class="section" id="sec-kb">
+      <div class="tab-bar" id="kbTabs">
+        <button class="tab-btn active" onclick="showKB('rhythm',this)">心律判讀</button>
+        <button class="tab-btn" onclick="showKB('airway',this)">氣道管理</button>
+        <button class="tab-btn" onclick="showKB('5h5t',this)">5H5T</button>
+        <button class="tab-btn" onclick="showKB('special',this)">特殊情況</button>
+        <button class="tab-btn" onclick="showKB('trauma',this)">外傷 ETTC</button>
+        <button class="tab-btn" onclick="showKB('access',this)">血管通路</button>
+        <button class="tab-btn" onclick="showKB('megacode',this)">Megacode</button>
+      </div>
+      <div id="kbContent"></div>
+    </div>
+
+    <!-- EXAM -->
+    <div class="section" id="sec-exam">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="showExam('top15',this)">TOP 15</button>
+        <button class="tab-btn" onclick="showExam('numbers',this)">數字速記</button>
+        <button class="tab-btn" onclick="showExam('scenario',this)">情境判斷</button>
+        <button class="tab-btn" onclick="showExam('traps',this)">常見陷阱</button>
+      </div>
+      <div id="examContent"></div>
+    </div>
+
+    <!-- MNEMO -->
+    <div class="section" id="sec-mnemo">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="showMnemo('cpr',this)">CPR 核心</button>
+        <button class="tab-btn" onclick="showMnemo('drug',this)">藥物口訣</button>
+        <button class="tab-btn" onclick="showMnemo('rhythm',this)">心律口訣</button>
+        <button class="tab-btn" onclick="showMnemo('scenario',this)">情境口訣</button>
+        <button class="tab-btn" onclick="showMnemo('rosc',this)">ROSC 口訣</button>
+      </div>
+      <div id="mnemoContent"></div>
+    </div>
+
+    <!-- UPDATE -->
+    <div class="section" id="sec-update">
+      <div class="alert alert-blue" style="margin-bottom:14px">依據 2025 AHA Guidelines for CPR & ECC（Circulation, 2025）</div>
+      <div class="sec-label">主要更新（vs 2020版）</div>
+      <div id="updateList"></div>
+      <div class="sec-label" style="margin-top:16px">2025 vs 2020 對照表</div>
+      <div class="card"><div class="card-body">
+        <table class="tbl">
+          <tr><th>2020 版</th><th>2025 更新</th></tr>
+          <tr><td>TTM 目標：33°C 或 36°C</td><td>32–37.5°C；核心→<strong>避免發燒</strong></td></tr>
+          <tr><td>Vasopressin 可替代血管收縮劑</td><td><strong>Vasopressin 移除</strong>，Epi 是唯一選擇</td></tr>
+          <tr><td>機械式 CPR：部分情況可考慮</td><td>不常規，僅手動 CPR 不可行時</td></tr>
+          <tr><td>起搏：可考慮用於某些情況</td><td><strong>不應</strong>作為已建立停跳的復甦策略</td></tr>
+          <tr><td>ROSC 後：收縮壓 ≥90</td><td>SBP ≥90 <strong>+ MAP ≥65</strong></td></tr>
+          <tr><td>IO：IV 失敗後使用</td><td>IV 無法快速取得時<strong>立即使用</strong></td></tr>
+          <tr><td>傳統 Valsalva</td><td><strong>Modified Valsalva</strong> 效果更佳（成功率 43% vs 17%）</td></tr>
+          <tr><td>ROSC 後 O2：高流量</td><td>SpO2 目標 <strong>92–98%</strong>（避免高氧）</td></tr>
+          <tr><td>CCF 目標 &gt;60%</td><td>CCF 目標 <strong>&gt;80%</strong></td></tr>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="section" id="sec-search">
+      <div id="searchResults"></div>
+    </div>
+
+  </div>
+  <nav id="nav">
+    <button class="nav-item active" onclick="goTo('sec-home')" id="nav-home"><span class="nav-icon">🏠</span>首頁</button>
+    <button class="nav-item" onclick="goTo('sec-flow')" id="nav-flow"><span class="nav-icon">⚡</span>流程</button>
+    <button class="nav-item" onclick="goTo('sec-drug')" id="nav-drug"><span class="nav-icon">💊</span>藥物</button>
+    <button class="nav-item" onclick="goTo('sec-exam')" id="nav-exam"><span class="nav-icon">✅</span>考點</button>
+    <button class="nav-item" onclick="goTo('sec-mnemo')" id="nav-mnemo"><span class="nav-icon">🧠</span>口訣</button>
+  </nav>
+</div>
+<script>
+const DRUGS=[
+{id:'epi',name:'Epinephrine',sub:'腎上腺素',cat:['arrest','shock'],tags:['心跳停止','VF','pVT','PEA','過敏休克'],
+indications:[
+{ind:'VF/pVT（心跳停止）',dose:'1 mg IV/IO',freq:'每3–5分鐘',note:'第2循環後才給（讓去顫先嘗試）'},
+{ind:'PEA / Asystole',dose:'1 mg IV/IO',freq:'每3–5分鐘',note:'越早越好'},
+{ind:'過敏性休克',dose:'0.3–0.5 mg IM',freq:'每5–15分鐘可重複',note:'大腿外側；嚴重時可 IV 輸注'},
+{ind:'症狀性心搏過緩（橋接）',dose:'2–10 mcg/min',freq:'持續輸注',note:'起搏優先，此為橋接'},
+],
+notes:['給藥後 20 mL NS 沖管，抬高手臂 20–30 秒','2025：Vasopressin 已移除，Epi 是唯一推薦血管收縮劑'],calcFields:null},
+{id:'amio',name:'Amiodarone',sub:'胺碘酮',cat:['arrest','rhythm'],tags:['VF','pVT','VT','心跳停止'],
+indications:[
+{ind:'難治性 VF/pVT（第1次）',dose:'300 mg IV/IO push',freq:'單次',note:'稀釋於20–30 mL D5W；去顫+Epi仍無效後'},
+{ind:'難治性 VF/pVT（第2次）',dose:'150 mg IV/IO push',freq:'單次',note:'可重複一次'},
+{ind:'穩定性 VT（急性期）',dose:'150 mg IV over 10 min',freq:'單次',note:'穩定才慢滴；不穩定直接電擊'},
+{ind:'ROSC 後維持（前6小時）',dose:'1 mg/min',freq:'持續輸注',note:''},
+{ind:'ROSC 後維持（後18小時）',dose:'0.5 mg/min',freq:'持續輸注',note:'總量 <2.2 g/24hr'},
+],
+notes:['VF/pVT 中為第2線（去顫+Epi優先）','禁忌：Torsades de Pointes（QT延長引起的寬QRS）','肝臟代謝（腎衰竭不需禁用）'],calcFields:null},
+{id:'lido',name:'Lidocaine',sub:'利多卡因',cat:['arrest','rhythm'],tags:['VF','pVT','VT','Amiodarone替代'],
+indications:[
+{ind:'VF/pVT（首次）',dose:'1–1.5 mg/kg IV/IO',freq:'單次',note:'最大量3 mg/kg；共可用3次'},
+{ind:'VF/pVT（追加）',dose:'0.5–0.75 mg/kg',freq:'每5–10分鐘',note:''},
+{ind:'穩定 VT（維持）',dose:'1–4 mg/min',freq:'持續輸注',note:'ROSC 後可繼續'},
+],
+notes:['Amiodarone 無法取得或過敏時的替代選擇','PEA 不用 Lidocaine（只用 Epi + 找原因）'],
+calcFields:[{label:'首次劑量（1.5 mg/kg）',factor:1.5,unit:'mg',max:null},{label:'追加劑量（0.75 mg/kg）',factor:0.75,unit:'mg',max:null}]},
+{id:'atropine',name:'Atropine',sub:'阿托品',cat:['rhythm'],tags:['心搏過緩','bradycardia','AV block'],
+indications:[
+{ind:'症狀性心搏過緩（首選）',dose:'0.5 mg IV',freq:'每3–5分鐘，最多3mg',note:'最小劑量0.5mg！<0.5mg可能反效果'},
+{ind:'Mobitz II / Complete AV Block',dose:'效果差，不應依賴',freq:'',note:'直接安排 TCP'},
+],
+notes:['<0.5 mg 可能 paradoxical 增強心搏過緩','禁用：Asystole、PEA、Mobitz II / 3度AV block合併寬QRS','心臟移植病患無效（無迷走神經）','部分題庫考 1 mg，注意題目版本'],calcFields:null},
+{id:'adenosine',name:'Adenosine',sub:'腺苷',cat:['rhythm'],tags:['SVT','PSVT','窄QRS','上室頻速'],
+indications:[
+{ind:'穩定性窄 QRS SVT（首次）',dose:'6 mg IV rapid push',freq:'單次',note:'立即 20 mL NS 沖管，抬高手臂；半衰期僅10秒，速度要快！'},
+{ind:'穩定性窄 QRS SVT（第2次）',dose:'12 mg IV rapid push',freq:'可再給一次12mg',note:''},
+{ind:'規則性寬 QRS SVT（診斷用）',dose:'6 mg IV rapid push',freq:'單次',note:'若VT無效，有助診斷'},
+],
+notes:['禁忌：WPW合併AF（可能加速旁道傳導→誘發VF）','禁忌：嚴重支氣管哮喘','懷孕可安全使用','副作用：胸悶、臉紅、短暫呼吸困難（告知病患）'],calcFields:null},
+{id:'mag',name:'Magnesium Sulfate',sub:'硫酸鎂',cat:['rhythm'],tags:['TdP','Torsades de Pointes','低鎂'],
+indications:[
+{ind:'Torsades de Pointes（TdP）',dose:'2 g IV over 10 min',freq:'單次（可重複）',note:'首選！'},
+{ind:'低鎂血症',dose:'2 g IV over 10–20 min',freq:'',note:''},
+{ind:'先兆子癇',dose:'4–6 g IV over 15–20 min',freq:'負荷劑量',note:'之後1–2 g/hr維持'},
+],
+notes:['給太快可致低血壓、心臟傳導抑制','同時去除QT延長因素（藥物、低鎂、低鉀）'],calcFields:null},
+{id:'diltiazem',name:'Diltiazem',sub:'鈣離子阻斷劑',cat:['rhythm'],tags:['AF','AFL','速率控制','SVT'],
+indications:[
+{ind:'AF/AFL 速率控制（首次）',dose:'0.25 mg/kg IV over 2 min',freq:'單次',note:'約15–20 mg'},
+{ind:'AF/AFL 速率控制（維持）',dose:'5–15 mg/hr',freq:'持續輸注',note:''},
+],
+notes:['禁忌：EF<40%心衰、重度心搏過緩、WPW+AF'],
+calcFields:[{label:'首次劑量（0.25 mg/kg）',factor:0.25,unit:'mg',max:null}]},
+{id:'verapamil',name:'Verapamil',sub:'鈣離子阻斷劑',cat:['rhythm'],tags:['SVT','AF','速率控制'],
+indications:[
+{ind:'SVT / AF 速率控制（首次）',dose:'2.5–5 mg IV over 2 min',freq:'單次',note:''},
+{ind:'追加',dose:'5–10 mg IV',freq:'每15–30分鐘',note:''},
+],
+notes:['禁忌：EF<40%心衰、重度心搏過緩、WPW+AF'],calcFields:null},
+{id:'metoprolol',name:'Metoprolol',sub:'乙型阻斷劑',cat:['rhythm'],tags:['AF','AFL','速率控制','β-blocker'],
+indications:[{ind:'AF/AFL 速率控制',dose:'2.5–5 mg IV',freq:'每2–5分鐘，最多15mg',note:''}],
+notes:['禁忌：重度心衰、心搏過緩、支氣管痙攣、低血壓'],calcFields:null},
+{id:'dopamine',name:'Dopamine',sub:'多巴胺',cat:['rhythm','shock'],tags:['心搏過緩','升壓','橋接'],
+indications:[
+{ind:'症狀性心搏過緩（橋接）',dose:'5–20 mcg/kg/min',freq:'持續輸注',note:'Atropine無效時第二線'},
+],
+notes:['<5 mcg/kg/min 腎效應；5–10 β效應；>10 α縮血管效應'],calcFields:null},
+{id:'norepi',name:'Norepinephrine',sub:'正腎上腺素',cat:['shock'],tags:['休克','敗血症','升壓','ROSC'],
+indications:[{ind:'心因性/敗血性休克；ROSC後低血壓',dose:'0.01–3 mcg/kg/min',freq:'持續輸注',note:'ROSC後低血壓首選'}],
+notes:['外漏可致組織壞死，須使用中央靜脈'],calcFields:null},
+{id:'digoxin',name:'Digoxin',sub:'毛地黃',cat:['rhythm'],tags:['AF','速率控制'],
+indications:[{ind:'AF 速率控制',dose:'0.25 mg IV',freq:'每2小時，最多1.5mg',note:'起效慢（6–8小時），非急性優先選擇'}],
+notes:['禁忌：WPW、預激症候群（禁忌！）','腎功能不全需調整劑量'],calcFields:null},
+{id:'bicarb',name:'Sodium Bicarbonate',sub:'碳酸氫鈉',cat:['arrest'],tags:['高血鉀','酸中毒','TCA中毒'],
+indications:[
+{ind:'高血鉀症（Class I）',dose:'1 mEq/kg IV',freq:'依血氣調整',note:'最有效適應症'},
+{ind:'重度代謝性酸中毒',dose:'1 mEq/kg IV',freq:'依ABG調整',note:''},
+{ind:'三環抗鬱劑中毒（TCA）',dose:'1–2 mEq/kg IV',freq:'',note:'目標血中 pH 7.5–7.55'},
+],
+notes:['一般心跳停止不常規給予','給藥後ETCO2暫時升高，勿誤判為ROSC！','不要與Calcium同管路（沉澱）'],
+calcFields:[{label:'初始劑量（1 mEq/kg）',factor:1,unit:'mEq',max:null}]},
+{id:'calcium',name:'Calcium Chloride',sub:'氯化鈣 10%',cat:['arrest'],tags:['高血鉀','高鎂','CCB中毒'],
+indications:[
+{ind:'高血鉀症 / 高鎂血症 / CCB中毒',dose:'1 g（10 mL 10%）IV over 2–5 min',freq:'可重複',note:''},
+],
+notes:['不要與Sodium Bicarbonate同管路（沉澱！）'],calcFields:null},
+{id:'procainamide',name:'Procainamide',sub:'普魯卡因醯胺',cat:['rhythm'],tags:['VT','WPW','穩定VT'],
+indications:[
+{ind:'穩定寬 QRS VT（替代）',dose:'20–50 mg/min 輸注',freq:'至VT終止或最大17 mg/kg',note:'QRS增寬>50%或低血壓→停'},
+{ind:'WPW + AF（藥物選項）',dose:'同上',freq:'',note:'電擊是首選'},
+],
+notes:['Amiodarone替代選擇','QT延長，有致心律不整風險'],calcFields:null},
+// ACS
+{id:'aspirin',name:'Aspirin',sub:'阿斯匹靈',cat:['acs'],tags:['ACS','STEMI','NSTEMI','抗血小板'],
+indications:[{ind:'ACS（急性期）',dose:'162–325 mg 嚼碎服用',freq:'一次',note:'越早越好，若無禁忌立即給'}],
+notes:['禁忌：活動性出血、阿斯匹靈過敏','嚼碎可加速吸收'],calcFields:null},
+{id:'ntg',name:'Nitroglycerin',sub:'硝化甘油',cat:['acs'],tags:['ACS','胸痛','硝化甘油'],
+indications:[
+{ind:'急性胸痛（舌下）',dose:'0.4 mg 舌下含服',freq:'每5分鐘，最多3次',note:''},
+{ind:'持續胸痛（靜脈）',dose:'5–10 mcg/min',freq:'持續輸注，逐漸加量',note:''},
+],
+notes:['禁忌：SBP<90 mmHg','禁忌：右心室梗塞','禁忌：48小時內使用PDE-5抑制劑（Sildenafil/威而鋼）'],calcFields:null},
+{id:'heparin',name:'Heparin（UFH）',sub:'肝素',cat:['acs'],tags:['ACS','STEMI','NSTEMI','抗凝'],
+indications:[{ind:'ACS 急性期',dose:'60 U/kg bolus（最大4000U）',freq:'單次',note:'之後12 U/kg/hr輸注（最大1000 U/hr）'}],
+notes:['監測aPTT或anti-Xa調整劑量'],
+calcFields:[{label:'Bolus（60 U/kg，最大4000U）',factor:60,unit:'U',max:4000},{label:'維持（12 U/kg/hr，最大1000 U/hr）',factor:12,unit:'U/hr',max:1000}]},
+{id:'morphine',name:'Morphine',sub:'嗎啡',cat:['acs'],tags:['ACS','胸痛','止痛'],
+indications:[{ind:'ACS 疼痛控制',dose:'2–4 mg IV',freq:'可重複',note:'謹慎使用'}],
+notes:['可能掩蓋症狀、影響P2Y12藥物吸收（Ticagrelor/Clopidogrel）','非一線止痛選擇'],calcFields:null},
+// Stroke
+{id:'tpa',name:'Alteplase（tPA）',sub:'靜脈溶栓',cat:['stroke'],tags:['Stroke','中風','溶栓','tPA'],
+indications:[{ind:'急性缺血性中風',dose:'0.9 mg/kg（最大90mg）',freq:'單次',note:'10%先靜推（1–2分鐘），其餘90%共60分鐘輸注'}],
+notes:[
+'時間窗：發作至給藥 <4.5 小時（≥18歲，無禁忌症）',
+'給藥前血壓目標：<185/110 mmHg（無法控制→勿給）',
+'給藥後24小時血壓維持：<185/110 mmHg',
+'Door-to-Needle（D2N）目標：≤60分鐘',
+'主要禁忌：顱內出血、3個月內大手術、活動性消化道出血（考試最常選）',
+'24小時內禁止抗凝/抗血小板藥物',
+],
+calcFields:[{label:'總劑量（0.9 mg/kg，最大90mg）',factor:0.9,unit:'mg',max:90},{label:'靜推部分（10%）',factor:0.09,unit:'mg',max:9},{label:'輸注部分（90%，60分鐘）',factor:0.81,unit:'mg',max:81}]},
+];
+
+const FLOWS={
+vf:[
+{type:'neutral',text:'發現無反應 → 確認無呼吸（或僅喘息）→ 確認無脈搏（10秒內）→ 啟動緊急系統'},
+{type:'arrow'},
+{type:'action',label:'立即開始',text:'高品質 CPR（100–120次/分，深5–6cm，完全回彈，中斷<10秒）'},
+{type:'arrow'},
+{type:'decision',text:'2分鐘後分析節律：VF 或 pVT？'},
+{type:'arrow',label:'是 → 可電擊'},
+{type:'danger',label:'立即去顫',text:'雙相波 120–200 J（不確定→200 J）'},
+{type:'arrow',label:'去顫後立即繼續 CPR，不先看節律、不摸脈搏'},
+{type:'action',text:'建立 IV/IO → 第2循環後給 Epinephrine 1mg（之後每3–5分鐘）'},
+{type:'arrow'},
+{type:'action',text:'若持續 VF/pVT：Amiodarone 300mg IV/IO push（第2次 150mg）\n或 Lidocaine 1–1.5mg/kg（替代）'},
+{type:'arrow'},
+{type:'neutral',text:'每2分鐘分析節律，搜尋並治療可逆原因（5H5T）'},
+{type:'arrow',label:'若 ROSC'},
+{type:'success',text:'→ 轉入 ROSC 後照護流程'},
+],
+pea:[
+{type:'neutral',text:'發現無反應 → 確認無呼吸 → 確認無脈搏 → 啟動緊急系統'},
+{type:'arrow'},
+{type:'action',label:'立即開始',text:'高品質 CPR'},
+{type:'arrow'},
+{type:'decision',text:'分析節律：有 QRS 但無脈 = PEA；直線 = Asystole\n→ 兩者均不可電擊！不要 Atropine！'},
+{type:'arrow'},
+{type:'danger',label:'核心處置',text:'立即建立 IV/IO → Epinephrine 1mg（越早越好，每3–5分鐘）'},
+{type:'arrow'},
+{type:'danger',label:'關鍵！積極搜尋 5H5T',text:'Hypovolemia（最常見）、Hypoxia、Acidosis、K+失衡、Hypothermia\nTension PTX、Tamponade、Toxins、肺栓塞、AMI\n\n寬而慢的PEA → 想到高血鉀、TCA/BB/CCB中毒'},
+{type:'arrow'},
+{type:'action',text:'進階氣道（SGA 或 ETT）→ 插管後每6秒換氣（10次/分），持續不中斷按壓'},
+{type:'arrow'},
+{type:'neutral',text:'每2分鐘分析節律，持續治療可逆原因'},
+],
+brady:[
+{type:'neutral',text:'心率 <60 bpm → 評估是否有不穩定症狀'},
+{type:'neutral',label:'不穩定症狀',text:'低血壓（SBP<90）、意識改變、缺血性胸痛、急性心衰竭、休克'},
+{type:'arrow'},
+{type:'action',label:'步驟1：基礎處置',text:'維持氣道、給氧（SpO2<94%時）、建立IV/IO、做12-Lead ECG'},
+{type:'arrow'},
+{type:'decision',text:'是否有不穩定症狀？'},
+{type:'arrow',label:'有 → 積極處置'},
+{type:'action',label:'步驟2：Atropine',text:'0.5mg IV，每3–5分鐘，最多3mg\n若無效或Mobitz II / CHB → 直接起搏'},
+{type:'arrow'},
+{type:'danger',label:'步驟3：TCP（經皮起搏）',text:'60–80 bpm 起始，逐漸增加電流至 electrical capture\n確認同時有 mechanical capture（血壓上升）\n給予鎮痛 ± 鎮靜'},
+{type:'arrow'},
+{type:'action',label:'步驟4：橋接輸注',text:'Dopamine 5–20 mcg/kg/min\n或 Epinephrine 2–10 mcg/min'},
+{type:'arrow'},
+{type:'neutral',label:'步驟5：治療可逆原因',text:'β-blocker/CCB/Digoxin過量、AMI（下壁）、高血鉀、低體溫'},
+],
+tachy:[
+{type:'neutral',text:'心率 >150 bpm → 評估穩定性'},
+{type:'arrow'},
+{type:'decision',text:'是否不穩定？\n（低血壓、意識改變、缺血胸痛、急性心衰）'},
+{type:'arrow',label:'不穩定'},
+{type:'danger',label:'立即同步電擊',text:'SVT/AFL：50–100J　VT（單型）：100J\nAF：120–200J　WPW+AF：200J（去顫劑量）\n→ 意識清醒先鎮靜'},
+{type:'arrow',label:'穩定 → 分析心律'},
+{type:'decision',text:'QRS 窄（<120ms）且規則？（通常為 SVT）'},
+{type:'arrow',label:'是'},
+{type:'action',label:'穩定性窄 QRS SVT',text:'1. Modified Valsalva（吹氣後迅速平躺+抬腿），成功率43%\n2. Adenosine 6mg rapid push + NS 20mL flush → 12mg → 12mg\n3. Diltiazem 或 Metoprolol IV\n4. 持續→心臟科會診'},
+{type:'arrow',label:'寬 QRS（≥120ms）→ 先假設 VT！'},
+{type:'danger',label:'寬 QRS 處置',text:'規則VT（穩定）：Amiodarone 150mg/10min IV\nWPW+AF（不規則寬）：禁AV blockers！→電擊或Procainamide\nTdP：Magnesium 2g IV + 去除QT延長因素'},
+],
+rosc:[
+{type:'success',label:'ROSC 確認',text:'ETCO2 突升 ≥35–40 mmHg / 動脈壓波形 / 可觸摸脈搏 / 血壓恢復'},
+{type:'arrow',label:'立即處置（關鍵10分鐘）'},
+{type:'action',label:'呼吸管理',text:'SpO2 目標 92–98%（避免高氧！）\nPaCO2 目標 35–45 mmHg（避免過度換氣）'},
+{type:'arrow'},
+{type:'action',label:'循環支持',text:'SBP 目標 ≥90 mmHg；MAP 目標 65–100 mmHg\n低血壓→補液 + Norepinephrine（首選）'},
+{type:'arrow'},
+{type:'danger',label:'立即做 12-Lead ECG',text:'STEMI → 無論神經學狀況，建議緊急心導管（PCI）\nDoor-to-Balloon 目標：<90分鐘'},
+{type:'arrow'},
+{type:'action',label:'神經保護（TTM）',text:'仍昏迷（GCS<8）→ 考慮 TTM\n目標體溫：32–37.5°C（2025：避免發燒>37.5°C 是核心）\n至少24小時；復溫速度 ≤0.25°C/hr'},
+{type:'arrow'},
+{type:'action',label:'血糖控制',text:'目標 140–180 mg/dL\n避免低血糖（<80 mg/dL）'},
+],
+};
+
+const KB={
+rhythm:`<div class="subsec-title">心律分類</div>
+<div class="card"><div class="card-body"><table class="tbl">
+<tr><th>類別</th><th>心律</th></tr>
+<tr><td><span class="badge badge-red">可電擊</span></td><td>VF（心室顫動）、pVT（無脈性心室頻速）</td></tr>
+<tr><td><span class="badge badge-blue">不可電擊</span></td><td>Asystole（心搏停止）、PEA（無脈性電氣活動）</td></tr>
+</table>
+<div class="mnemo-box" style="margin-top:10px"><div class="mnemo-title">★ 口訣</div><div class="mnemo-text">VF/pVT → 電擊；PEA/Asystole → 不電擊、Epi + 找原因<br>PEA/Asystole：不電、不Atropine、不Lidocaine、不常規Bicarb</div></div>
+</div></div>
+<div class="subsec-title">ECG 定義數字</div>
+<div class="card"><div class="card-body"><table class="tbl">
+<tr><th>定義</th><th>數值</th></tr>
+<tr><td>Wide QRS</td><td>≥ 0.12 秒（≥ 3 小格）</td></tr>
+<tr><td>一度 AV Block</td><td>PR interval > 0.20 秒</td></tr>
+<tr><td>Mobitz I（Wenckebach）</td><td>PR 逐漸延長，QRS 消失（dropped beat）</td></tr>
+<tr><td>Mobitz II</td><td>PR 固定，QRS 突然消失（危險！→ 直接TCP）</td></tr>
+<tr><td>三度（Complete AV Block）</td><td>P波與QRS完全無關，各自獨立（緊急！）</td></tr>
+<tr><td>竇性心跳速率上限</td><td>220 − 年齡（次/分）</td></tr>
+</table></div></div>
+<div class="subsec-title">常見心搏過速心律</div>
+<div class="card"><div class="card-body"><table class="tbl">
+<tr><th>心律</th><th>特徵</th><th>心率</th><th>初始處置</th></tr>
+<tr><td>Sinus Tach</td><td>P波正常，律整</td><td>100–180</td><td>治療根本原因</td></tr>
+<tr><td>SVT/PSVT</td><td>窄QRS，律整</td><td>150–250</td><td>迷走→Adenosine</td></tr>
+<tr><td>AF</td><td>無P波，不規則R-R</td><td>110–160</td><td>速率控制或節律控制</td></tr>
+<tr><td>AFL</td><td>鋸齒F波（250–350/min）</td><td>通常150（2:1）</td><td>速率控制或電擊</td></tr>
+<tr><td>單型VT</td><td>寬QRS（>120ms），律整</td><td>100–250</td><td>穩定→Amiodarone；不穩→電擊</td></tr>
+<tr><td>TdP</td><td>QRS圍繞基線扭轉，QT延長</td><td>150–300</td><td>Magnesium 2g IV</td></tr>
+</table></div></div>
+<div class="subsec-title">ETCO2 臨床意義</div>
+<div class="card"><div class="card-body">
+<div class="alert alert-blue">ETCO2 突然上升 ≥35–40 mmHg → 強烈提示 ROSC</div>
+<div class="alert alert-red">ETCO2 持續 <10 mmHg → CPR品質差，或預後不佳指標</div>
+<div class="alert alert-yellow">Sodium Bicarbonate 後 ETCO2 暫時升高 → 勿誤判為 ROSC！需多重指標確認</div>
+<div class="alert alert-blue" style="margin-bottom:0">連續3次通氣 CO2 ≥25 mmHg → 插管位置正確的確認方式</div>
+</div></div>
+<div class="subsec-title">WPW 重要考點</div>
+<div class="card"><div class="card-body">
+<div class="alert alert-red"><strong>WPW 合併 AF → 禁用：</strong>Adenosine、Diltiazem、Verapamil、Digoxin、β-blocker<br>（可能加速旁道傳導→誘發 VF！）</div>
+<div class="alert alert-green" style="margin-bottom:0">WPW + AF 處置：電擊（首選）或 Procainamide</div>
+</div></div>`,
+airway:`<div class="subsec-title">2025 AHA 氣道管理優先順序</div>
+<div class="card"><div class="card-body">
+<div class="alert alert-red" style="margin-bottom:10px">不應為了插管而中斷 CPR 超過 10 秒！</div>
+<div class="flow-step action"><div class="flow-label">第一優先</div>Bag-Mask Ventilation（BVM）— ACLS 早期使用</div>
+<div class="flow-arrow">↓</div>
+<div class="flow-step action"><div class="flow-label">第二優先</div>聲門上氣道（SGA）— LMA、i-gel（插入快速，技術要求低）</div>
+<div class="flow-arrow">↓</div>
+<div class="flow-step action"><div class="flow-label">第三優先</div>氣管內插管（ETT）— 金標準，但不應延誤去顫或按壓</div>
+</div></div>
+<div class="subsec-title">呼吸道設備數字</div>
+<div class="card"><div class="card-body"><table class="tbl">
+<tr><th>項目</th><th>數值</th><th>說明</th></tr>
+<tr><td>BVM 成人潮氣量</td><td>500–600 mL</td><td>看到胸部起伏即可，不要過度吹</td></tr>
+<tr><td>成人 ETT 深度（前牙）</td><td>19–23 cm</td><td></td></tr>
+<tr><td>插管中斷壓胸上限</td><td>&lt;10 秒</td><td>插管不能搶走 CPR 的時間</td></tr>
+<tr><td>抽吸時間上限</td><td>&lt;15 秒</td><td></td></tr>
+<tr><td>鼻導管 FiO2 公式</td><td>20% + 4% × L/min</td><td>4L/min→36%；6L/min→44%</td></tr>
+<tr><td>簡單型氧氣面罩</td><td>6–10 L/min → 40–60%</td><td>&lt;6L/min 有 CO2 滯留風險</td></tr>
+<tr><td>NPA 禁忌</td><td>顏面創傷、疑似顱底骨折</td><td>半昏迷有反射→NPA；完全昏迷無反射→OPA</td></tr>
+</table>
+<div class="mnemo-box" style="margin-top:10px"><div class="mnemo-title">DOPE（插管後惡化鑑別）</div><div class="mnemo-text">D — Displacement 移位<br>O — Obstruction 阻塞<br>P — Pneumothorax 氣胸<br>E — Equipment failure 設備失效</div></div>
+</div></div>`,
+'5h5t':`<div class="subsec-title">5H — 代謝/生理因素</div>
+<div class="card"><div class="card-body"><table class="tbl">
+<tr><th>H</th><th>中文</th><th>快速診斷/處置</th></tr>
+<tr><td><strong>Hypovolemia</strong></td><td>低血容量（PEA最常見！）</td><td>外傷/失血史？頸靜脈平？→快速輸液</td></tr>
+<tr><td><strong>Hypoxia</strong></td><td>低氧</td><td>確認氣道、SpO2→高流量O2</td></tr>
+<tr><td><strong>Hydrogen ion</strong></td><td>酸中毒</td><td>ABG→考慮Sodium Bicarbonate</td></tr>
+<tr><td><strong>Hypo/Hyperkalemia</strong></td><td>低/高血鉀</td><td>高K→CaCl2+Bicarb+Insulin/Glucose</td></tr>
+<tr><td><strong>Hypothermia</strong></td><td>低體溫</td><td>測核心溫度；積極復溫（ECMO如需）</td></tr>
+</table></div></div>
+<div class="subsec-title">5T — 結構/外部因素</div>
+<div class="card"><div class="card-body"><table class="tbl">
+<tr><th>T</th><th>中文</th><th>快速診斷/處置</th></tr>
+<tr><td><strong>Tension PTX</strong></td><td>張力性氣胸</td><td>氣管偏移+患側呼吸音消失+頸靜脈怒張→<strong>不等CXR！</strong>14G針第2肋間鎖骨中線→胸管</td></tr>
+<tr><td><strong>Tamponade</strong></td><td>心包填塞</td><td>Beck三徵（低血壓+頸靜脈怒張+心音遙遠）→超音波→心包穿刺</td></tr>
+<tr><td><strong>Toxins</strong></td><td>中毒</td><td>服藥史；針對性解毒劑（Narcan/Atropine等）</td></tr>
+<tr><td><strong>Thrombosis（PE）</strong></td><td>肺栓塞</td><td>D-dimer；ROSC後考慮溶栓或取栓</td></tr>
+<tr><td><strong>Thrombosis（MI）</strong></td><td>急性心肌梗塞</td><td>ROSC後12-Lead ECG；STEMI→緊急PCI</td></tr>
+</table></div></div>
+<div class="mnemo-box"><div class="mnemo-title">★ 記憶口訣</div><div class="mnemo-text">5H：缺氧缺血酸鉀冷<br>5T：氣胸填塞毒肺冠<br><br>寬而慢的PEA → 高血鉀、TCA/BB/CCB中毒<br>低血容PEA → 初期多為窄QRS PEA</div></div>`,
+special:`<div class="subsec-title">先求救 vs 先 CPR</div>
+<div class="card"><div class="card-body"><table class="tbl">
+<tr><th>情境</th><th>處置</th><th>原因</th></tr>
+<tr><td>成人目擊突然倒地</td><td><strong>先求救取 AED，再 CPR</strong></td><td>成人多心律不整，AED 優先</td></tr>
+<tr><td>嬰幼兒，單人無法求救</td><td><strong>先 CPR 約 2 分鐘，再離開求援</strong></td><td>小兒多缺氧，先壓先吹</td></tr>
+<tr><td>溺水 / 藥物中毒 / 創傷</td><td><strong>先 CPR 2 分鐘再求救</strong></td><td>呼吸道問題居多</td></tr>
+</table><div class="mnemo-box" style="margin-top:10px"><div class="mnemo-title">★ 口訣</div><div class="mnemo-text">成人先求救；小兒/溺水/藥物中毒/創傷先 CPR 2 分鐘</div></div></div></div>
+<div class="subsec-title">過敏性休克（Anaphylaxis）</div>
+<div class="card"><div class="card-body">
+<div class="alert alert-red"><strong>第一步：Epinephrine 第一！</strong><br>0.3–0.5mg IM（大腿外側），每5–15分鐘可重複</div>
+<div class="alert alert-blue">體位：低血壓→平躺+抬腿；呼吸困難→坐起</div>
+<div class="alert alert-green">支持性：靜脈補液+O2；H1/H2 antihistamine；類固醇</div>
+<div class="alert alert-yellow" style="margin-bottom:0">Antihistamine 和類固醇不能取代 Epi！咽喉水腫→早期插管</div>
+</div></div>
+<div class="subsec-title">低體溫（Hypothermia）</div>
+<div class="card"><div class="card-body"><table class="tbl">
+<tr><th>程度</th><th>體溫</th><th>處置</th></tr>
+<tr><td>輕度</td><td>32–35°C</td><td>顫抖、意識清→主動復溫</td></tr>
+<tr><td>中度</td><td>28–32°C</td><td>意識改變、不顫抖→被動+主動復溫</td></tr>
+<tr><td>重度</td><td>&lt;28°C</td><td>可能停跳（VF常見）；CPR+復溫；ECMO</td></tr>
+</table>
+<div class="alert alert-red" style="margin-top:10px">&lt;30°C：電擊一次，若無效等體溫>30°C再重複；Epi效果差，延長給藥間隔</div>
+<div class="alert alert-blue" style="margin-bottom:0">「Warm and Dead is Dead」— 體溫恢復前不輕易放棄</div>
+</div></div>
+<div class="subsec-title">孕婦心跳停止</div>
+<div class="card"><div class="card-body">
+<div class="alert alert-red">孕>20週：<strong>手動子宮向左移位（LUD）</strong>，按壓同時向左推移子宮</div>
+<div class="alert alert-red">按壓位置略高於正常（橫膈上推）</div>
+<div class="alert alert-red"><strong>CPR 5分鐘內無ROSC → 立即急救剖腹產（PMCD）</strong></div>
+<div class="alert alert-blue" style="margin-bottom:0">所有標準ACLS藥物（包括Epi）均可使用</div>
+</div></div>
+<div class="subsec-title">溺水（Drowning）</div>
+<div class="card"><div class="card-body">
+<div class="alert alert-blue">溺水停跳通常因低氧 → 換氣比一般CPR更重要</div>
+<div class="alert alert-yellow"><strong>優先給予5次救援呼吸</strong>後再開始按壓（與一般CPR不同！）</div>
+<div class="alert alert-blue" style="margin-bottom:0">低體溫溺水預後可能較好（「Never cold and dead」）</div>
+</div></div>`,
+trauma:`<div class="subsec-title">初步評估 ABCDE</div>
+<div class="card"><div class="card-body"><table class="tbl">
+<tr><th>順序</th><th>項目</th><th>內容</th></tr>
+<tr><td><strong>A</strong></td><td>Airway + 頸椎固定</td><td>維持呼吸道通暢，限制頸椎活動</td></tr>
+<tr><td><strong>B</strong></td><td>Breathing 呼吸換氣</td><td>評估氣胸、血胸、肺挫傷</td></tr>
+<tr><td><strong>C</strong></td><td>Circulation 循環止血</td><td>控制外出血、輸液</td></tr>
+<tr><td><strong>D</strong></td><td>Disability 意識神經</td><td>GCS、瞳孔</td></tr>
+<tr><td><strong>E</strong></td><td>Exposure 露身</td><td>全身檢查 + 環境控制（防低體溫）</td></tr>
+</table><div class="alert alert-yellow" style="margin-top:10px;margin-bottom:0">病史詢問屬於次級評估，不屬於初步評估 ABCDE</div></div></div>
+<div class="subsec-title">失血分級</div>
+<div class="card"><div class="card-body"><table class="tbl">
+<tr><th>等級</th><th>失血量</th><th>失血%</th><th>血壓</th><th>心跳</th></tr>
+<tr><td>第一級</td><td>&lt;750 mL</td><td>&lt;15%</td><td>正常</td><td>正常</td></tr>
+<tr><td>第二級</td><td>750–1500 mL</td><td>15–30%</td><td>正常</td><td>可能變快</td></tr>
+<tr><td>第三級</td><td>1500–2000 mL</td><td>30–40%</td><td>降低</td><td>&gt;120</td></tr>
+<tr><td>第四級</td><td>&gt;2000 mL</td><td>&gt;40%</td><td>明顯降低</td><td>明顯變快</td></tr>
+</table><div class="alert alert-yellow" style="margin-top:10px;margin-bottom:0">最早出現的休克徵象：心跳加快｜骨盆骨折預估失血 1500–3000 mL（常被低估！）</div></div></div>
+<div class="subsec-title">GCS 評估</div>
+<div class="card"><div class="card-body"><table class="tbl">
+<tr><th>反應</th><th>分數</th><th>描述</th></tr>
+<tr><td>眼睛（E）</td><td>4/3/2/1</td><td>自然張開/被要求才開/疼痛刺激/無反應</td></tr>
+<tr><td>語言（V）</td><td>5/4/3/2/1</td><td>清楚回答/語無倫次/能說單字/只能發聲/無反應</td></tr>
+<tr><td>動作（M）</td><td>6/5/4/3/2/1</td><td>依指令/指出疼痛/屈曲/痙攣屈曲/伸張/無反應</td></tr>
+</table><div class="alert alert-red" style="margin-top:10px;margin-bottom:0">嚴重頭部外傷：GCS ≤ 8 → 需考慮插管</div></div></div>
+<div class="subsec-title">輸液急救原則</div>
+<div class="card"><div class="card-body"><table class="tbl">
+<tr><th>情境</th><th>處置</th></tr>
+<tr><td>成人外傷出血首選</td><td>晶質液（乳酸林格氏液）</td></tr>
+<tr><td>輸血估算</td><td>3:1 法則（失1份血→輸3份晶質液）</td></tr>
+<tr><td>2000 mL後仍休克</td><td>考慮輸血</td></tr>
+<tr><td>一般無法配對（台灣）</td><td>O型 Rh 陽性</td></tr>
+<tr><td>孕婦/育齡女性無法配對</td><td>O型 Rh 陰性 PRBC</td></tr>
+<tr><td>小兒第一步</td><td>L-R 20 mL/kg；仍休克→再20 mL/kg→PRBC 10 mL/kg</td></tr>
+</table></div></div>
+<div class="subsec-title">尿量監測目標</div>
+<div class="card"><div class="card-body"><table class="tbl">
+<tr><th>對象</th><th>尿量目標</th></tr>
+<tr><td>成人</td><td>≥ 0.5 mL/kg/hr</td></tr>
+<tr><td>&gt;1歲小孩</td><td>≥ 1 mL/kg/hr</td></tr>
+<tr><td>&lt;1歲嬰兒</td><td>≥ 2 mL/kg/hr</td></tr>
+</table></div></div>
+<div class="subsec-title">腹部創傷診斷工具</div>
+<div class="card"><div class="card-body"><table class="tbl">
+<tr><th>工具</th><th>適用情境</th><th>特點</th></tr>
+<tr><td>FAST 超音波</td><td>血液動力學不穩定</td><td>快速、非侵入、準確度 86–97%</td></tr>
+<tr><td>CT</td><td>血液動力學穩定</td><td>詳細但費時</td></tr>
+<tr><td>DPL 診斷性腹腔灌洗</td><td>快速診斷</td><td>陽性：抽出10mL血 或 RBC>100,000/mm³</td></tr>
+</table></div></div>`,
+access:`<div class="subsec-title">靜脈通路（IV Access）</div>
+<div class="card"><div class="card-body"><table class="tbl">
+<tr><th>類型</th><th>說明</th></tr>
+<tr><td>周邊靜脈（首選）</td><td>給藥後20mL NS沖管 + 抬高手臂20–30秒</td></tr>
+<tr><td>中央靜脈</td><td>周邊無法取得時；藥效更快，但建立耗時</td></tr>
+<tr><td>外頸靜脈（EJV）</td><td>CPR進行中可建立，較快</td></tr>
+</table></div></div>
+<div class="subsec-title">骨內通路（IO）— 2025更新</div>
+<div class="card"><div class="card-body">
+<div class="alert alert-blue">2025更新：IV無法快速取得時<strong>立即使用IO</strong>，不應延誤急救</div>
+<table class="tbl" style="margin-top:10px"><tr><th>項目</th><th>說明</th></tr>
+<tr><td>常見位置</td><td>脛骨近端（最常用）、肱骨近端、股骨遠端（兒科）</td></tr>
+<tr><td>設備</td><td>手動穿刺針、EZ-IO（電動鑽）、FAST1</td></tr>
+<tr><td>確認</td><td>注入液體低阻力、針穩固、可抽出骨髓</td></tr>
+<tr><td>沖管</td><td>推藥後務必<strong>20mL NS沖管</strong></td></tr>
+<tr><td>限制</td><td>骨折或感染部位不可使用</td></tr>
+</table></div></div>`,
+megacode:`<div class="subsec-title">Megacode 團隊領導能力</div>
+<div class="card"><div class="card-body"><table class="tbl">
+<tr><th>領導面向</th><th>具體行為</th></tr>
+<tr><td>Closed-Loop 溝通</td><td>「小陳，給Epi 1mg IV，給完回報」→「已給Epi」→「好，繼續按壓，2分鐘後分析」</td></tr>
+<tr><td>CPR品質監測</td><td>口語提示速率/深度；監測ETCO2</td></tr>
+<tr><td>節律分析決策</td><td>說出判斷：「這是VF，給電」或「這是PEA，繼續CPR，找5H5T」</td></tr>
+<tr><td>藥物時序管理</td><td>追蹤上次Epi時間；每循環主動詢問用藥狀況</td></tr>
+<tr><td>去顫安全</td><td>「大家離開！我離開！你離開！」再按放電</td></tr>
+<tr><td>ROSC後</td><td>立即轉換：「血壓？SpO2？做12-Lead ECG」</td></tr>
+</table></div></div>`,
+};
+
+const EXAM_TOP15=[
+'高品質CPR：100–120次/分，深度5–6cm，完全回彈，中斷<10秒，CCF>80%',
+'VF/pVT → 可電擊；Asystole/PEA → 不可電擊',
+'VF/pVT：去顫後立即CPR（不先看節律、不摸脈），2分鐘後再分析',
+'Epi in VF/pVT：第2個循環後才給（讓去顫先嘗試），之後每3–5分鐘',
+'Epi in PEA/Asystole：越早越好',
+'5H5T：PEA最重要的可逆原因（Hypovolemia最常見！）',
+'插管後換氣：10次/分（每6秒），持續不中斷CPR',
+'ETCO2突升≥40mmHg→可能ROSC；持續<10mmHg→預後差/CPR品質差',
+'Atropine：0.5mg IV；Mobitz II和Complete AV Block不有效→起搏；禁用於Asystole/PEA',
+'SVT處置：Modified Valsalva→Adenosine 6mg→12mg→CCB/β-blocker',
+'不穩定心搏過速→立即同步電擊（先鎮靜若可行）',
+'WPW+AF：禁AV node blockers→電擊或Procainamide',
+'Torsades de Pointes → Magnesium 2g IV',
+'ROSC後：SpO2 92–98%，PaCO2 35–45，MAP≥65，避免發燒，血糖140–180',
+'孕婦CPR：手動子宮向左移位；5分鐘無ROSC→緊急剖腹產（PMCD）'
+];
+
+const EXAM_NUMBERS=[
+{cat:'存活率',items:[
+{q:'VF未CPR未電擊，每分鐘存活下降',a:'7–10%'},
+{q:'有CPR但延遲電擊，每分鐘存活下降',a:'3–4%'},
+{q:'3–5分鐘內CPR+去顫，存活率可達',a:'49–75%'},
+{q:'院內早期電擊目標',a:'3分鐘內'},
+{q:'院外早期電擊目標',a:'5分鐘內'},
+{q:'腦細胞開始損傷',a:'心跳停止後4–6分鐘'},
+{q:'目擊心跳停止中VF比率',a:'約20–40%（常考40%）'},
+]},
+{cat:'CPR 品質監測',items:[
+{q:'動脈舒張壓（DBP）目標',a:'≥20 mmHg'},
+{q:'ETCO2 持續低→CPR品質差',a:'<10 mmHg'},
+{q:'ETCO2 突升→提示ROSC',a:'≥35–40 mmHg'},
+{q:'CPR造成正常心輸出量',a:'約25–33%（冷知識）'},
+{q:'口對口吹氣氧濃度',a:'約17%（冷知識）'},
+]},
+{cat:'ACS 時間目標',items:[
+{q:'D2EKG（到院後做完ECG）',a:'≤10分鐘'},
+{q:'D2N（給tPA）',a:'≤30分鐘（考試版）；臨床D2N≤60分鐘'},
+{q:'DIDO（轉院）',a:'≤30分鐘'},
+{q:'D2B（心導管打通）',a:'≤90分鐘（最重要！）'},
+{q:'ACS院前死亡率',a:'約52%'},
+{q:'ACS氧氣給法',a:'SpO2<90%才給（≥94%不需給）'},
+{q:'ACS診斷條件',a:'2 in 3（臨床症狀+EKG+心肌酵素，2項符合）'},
+]},
+{cat:'中風（CVA）時間目標',items:[
+{q:'CT完成目標',a:'到院後≤20分鐘'},
+{q:'CT判讀目標',a:'到院後≤45分鐘'},
+{q:'Door-to-Needle（D2N）',a:'≤60分鐘'},
+{q:'tPA時間窗',a:'症狀開始4.5小時內'},
+{q:'tPA給藥前血壓要求',a:'<185/110 mmHg'},
+{q:'CPSS（辛辛那提中風量表）靈敏度',a:'1項異常→中風可能性72%'},
+]},
+{cat:'ROSC 後目標',items:[
+{q:'SpO2目標（避免高氧）',a:'92–98%'},
+{q:'PaCO2目標（避免過度換氣）',a:'35–45 mmHg'},
+{q:'MAP目標',a:'≥65 mmHg'},
+{q:'血糖目標',a:'140–180 mg/dL'},
+{q:'TTM目標體溫（2025）',a:'32–37.5°C（核心：避免>37.5°C）'},
+]},
+];
+
+const EXAM_SCENARIOS=[
+{q:'成人目擊突然倒地，正確做法？',a:'先求救取AED，再CPR（成人多心律不整，AED優先）'},
+{q:'嬰幼兒/溺水/藥物中毒，單人無法求救，正確做法？',a:'先CPR約2分鐘，再離開求援（這些情況多是缺氧）'},
+{q:'PEA心律35/分、40/分、80/分，處置有什麼不同？',a:'都一樣！只要有電無脈就是PEA，不管心率快慢'},
+{q:'寬而慢的PEA，要想到什麼原因？',a:'高血鉀、TCA/β-blocker/CCB中毒（低血容PEA初期多是窄QRS）'},
+{q:'有意識的呼吸道阻塞，正確做法？',a:'5次背部拍擊+5次腹部推擠，反覆（孕婦/嚴重肥胖→改胸部推擠）'},
+{q:'意識喪失後的呼吸道阻塞，正確做法？',a:'放平→CPR，每次給氣前看口內有無異物（不再做站立哈姆立克）'},
+{q:'插管後病人惡化，先想什麼？',a:'DOPE（移位/阻塞/氣胸/設備失效），不要立刻拔管'},
+{q:'ACS合併威而鋼（Sildenafil）48小時內，NTG可以給嗎？',a:'不行！NTG絕對禁忌，可能嚴重低血壓'},
+{q:'終止CPR的時機？',a:'BLS+ACLS努力無效，與家屬溝通後決定（不是固定30分鐘；瞳孔放大不是指標）'},
+{q:'中風病患可以給5%葡萄糖水（含糖點滴）嗎？',a:'不行！只能給生理食鹽水（含糖點滴會加重腦損傷）'},
+{q:'1–8歲兒童沒有兒童AED，怎麼辦？',a:'可使用成人型AED（有兒童貼片優先；沒有也要電）'},
+{q:'小兒心跳停止主要原因是什麼？',a:'呼吸停止後缺氧（不是心律不整，和成人不同）'},
+];
+
+const TRAPS=[
+'電擊後立刻摸脈搏 → 不對！電擊後立刻CPR 2分鐘，不摸脈搏',
+'Atropine給<0.5mg → 可能反效果（paradoxical心搏過緩加重）',
+'PEA誤以為要電擊 → 不可！PEA是不可電擊節律',
+'PEA誤以為要用Atropine → 不建議！對PEA/Asystole無效',
+'不穩定VT猶豫用藥 → 應立即同步電擊，不要浪費時間試藥',
+'WPW+AF用Adenosine或Digoxin → 危險！可能致VF',
+'ROSC後給100% O2 → 高氧可能有害，目標SpO2 92–98%',
+'過度換氣（>10次/分）→ 胸內壓升高，減少靜脈回流和CO',
+'CPR中斷>10秒（如準備插管）→ 需同步訓練，CCF目標>80%',
+'Sodium Bicarb後ETCO2升高誤判為ROSC → 需多重指標確認（ETCO2+脈搏+血壓）',
+'Fine VF誤認為Asystole → 至少2個導程確認，調高增益',
+'不穩定AF超過48小時急著電擊 → 有血栓風險！應先抗凝血',
+];
+
+const MNEMO={
+cpr:[
+{title:'CPR 五要素口訣',text:'壓夠快（100–120）、壓夠深（5–6 cm）、讓胸回彈、少中斷（<10秒）、不過度換氣'},
+{title:'關鍵數字：10秒法則',text:'摸脈搏不超過10秒\n按壓中斷不超過10秒\n插管中斷不超過10秒\n→ 10秒是ACLS的魔法數字'},
+{title:'換人時機',text:'每2分鐘換壓胸者\n和分析心律同步\n（疲勞→品質下降）'},
+{title:'ETCO2 口訣',text:'舒張壓20、ETCO₂ 10；突升到40想ROSC\n（Bicarb後升高勿誤判！）'},
+{title:'存活率記憶',text:'未CPR未電擊→每分鐘下降7–10%\n有CPR延遲電擊→每分鐘下降3–4%\n3–5分鐘CPR+電擊→存活率49–75%\n→ 「救越快，活越多」'},
+],
+drug:[
+{title:'Epi 劑量口訣',text:'Epi 1mg IV/IO q3–5min（cardiac arrest）\nVF/pVT：第2循環後才給\nPEA/Asystole：越早越好\nVasopressin 2025已移除！'},
+{title:'Amiodarone 口訣',text:'VF→300mg push（可追加150mg）\n穩定VT→150mg/10min\nROSC維持→前6h 1mg/min，後18h 0.5mg/min\n總量<2.2g/24hr；肝代謝（腎衰可用）'},
+{title:'Atropine 口訣',text:'0.5mg IV，每3–5分鐘，最多3mg\n<0.5mg可能反效果！\n禁用：PEA、Asystole、Mobitz II/3度AV block\nMobitz II / CHB→直接TCP'},
+{title:'Adenosine 口訣',text:'6mg快速push + 20mL NS沖管\n→12mg→12mg\n半衰期10秒，必須快！\n孕婦可用；氣喘/WPW+AF禁'},
+{title:'Magnesium 口訣',text:'TdP首選：Mg 2g IV over 10min\n給太快→低血壓\n同時去除QT延長因素'},
+{title:'Bicarb 口訣',text:'最有效：確定高血鉀（Class I）\n一般cardiac arrest不常規給\n給後ETCO2暫升，勿誤判ROSC！'},
+],
+rhythm:[
+{title:'心律處置大原則',text:'VF/pVT → 電擊（可電擊）\nPEA/Asystole → 不電擊、Epi + 找5H5T\n有脈搏同步電擊\n無脈搏去顫'},
+{title:'電擊能量口訣',text:'VF/pVT去顫：200J（雙相）\nVT同步：100J起\nSVT同步：50–100J\nAF同步：120–200J\nWPW+AF：200J去顫'},
+{title:'SVT處置順序',text:'1. Modified Valsalva（吹氣+平躺+抬腿，成功率43%）\n2. Adenosine 6mg→12mg→12mg\n3. Diltiazem 或 Metoprolol\n4. 不穩定→立刻同步電擊'},
+{title:'WPW+AF禁藥口訣',text:'WPW+AF → 禁：Adenosine/Digoxin/CCB/β-blocker\n（加速旁道傳導→VF！）\n→ 電擊（首選）或 Procainamide'},
+{title:'Sinus Tach 口訣',text:'Sinus Tach 是症狀，不是疾病\n→ 找原因（發燒/缺氧/脫水/出血/疼痛）\n不電擊、不給抗心律不整藥'},
+],
+scenario:[
+{title:'先求救 vs 先CPR',text:'成人 → 先求救取AED\n小兒/溺水/藥物中毒/創傷 → 先CPR 2分鐘\n（記憶：成人心律問題，AED優先；\n 其他多是缺氧，先CPR）'},
+{title:'5H5T記憶法',text:'5H：缺氧缺血酸鉀冷\n（Hypoxia/Hypovolemia/H+/K/Hypothermia）\n5T：氣胸填塞毒肺冠\n（Tension/Tamponade/Toxins/PE/MI）\n\nPEA最常見→Hypovolemia'},
+{title:'PEA情境判斷',text:'寬而慢的PEA → 高血鉀、TCA/BB/CCB中毒\n窄QRS PEA → 低血容初期、肺栓塞\n有電無脈就是PEA，不管心率'},
+{title:'ACS重要禁忌',text:'NTG禁忌：低血壓<90/右心室梗塞/威而鋼48hr內\nMorphine：謹慎（影響P2Y12吸收）\n氧氣：SpO2<90%才給'},
+{title:'中風重要記憶',text:'BEFAST：平衡/眼睛/臉/手臂/說話/時間\ntPA時間窗：4.5小時內\ntPA前血壓：<185/110 mmHg\nD2N目標：≤60分鐘\n不給含糖點滴！（用生理食鹽水）\ntPA效果：減少神經損傷，但不降低死亡率'},
+],
+rosc:[
+{title:'ROSC後目標口訣',text:'SpO2 92–98%（避免高氧）\nPaCO2 35–45 mmHg（避免過度換氣）\nMAP ≥65 mmHg\n血糖 140–180 mg/dL\n體溫 <37.5°C（避免發燒）'},
+{title:'TTM 2025更新',text:'舊版：嚴格33°C（或36°C）\n2025新版：32–37.5°C均可\n核心：「避免發燒（>37.5°C）」\n復溫速度：≤0.25°C/hr'},
+{title:'ROSC後立即做什麼',text:'1. 12-Lead ECG → STEMI→緊急PCI\n2. 呼吸：SpO2 92–98%，PaCO2 35–45\n3. 循環：MAP≥65，低血壓→Norepinephrine\n4. 神經：仍昏迷→考慮TTM\n5. 血糖：目標140–180 mg/dL'},
+{title:'ROSC確認方法',text:'ETCO2突升≥35–40mmHg（最敏感早期指標）\n動脈壓波形出現\n觸摸到可靠脈搏\n血壓恢復可測量\n意識或自主呼吸恢復'},
+],
+};
+
+const UPDATES=[
+{text:'TTM體溫範圍放寬：由嚴格33°C改為32–37.5°C均可，重點在「避免發燒（>37.5°C）」',type:'blue'},
+{text:'Vasopressin移除：心跳停止中不再推薦，Epinephrine是唯一推薦血管收縮劑',type:'red'},
+{text:'IO優先順序明確化：IV無法快速取得時立即使用IO，不應延誤急救',type:'blue'},
+{text:'機械式CPR不常規使用：除非無法進行手動高品質CPR',type:'yellow'},
+{text:'電氣起搏不用於已建立的心跳停止',type:'red'},
+{text:'Modified Valsalva：吹氣後迅速平躺+抬腿，效果優於傳統Valsalva（43% vs 17%）',type:'green'},
+{text:'ROSC後高氧避免：SpO2目標92–98%，PaCO2 35–45mmHg',type:'blue'},
+{text:'CCF目標更新：目標>80%（舊版>60%）',type:'blue'},
+];
+
+function renderFlowStep(s){
+if(s.type==='arrow')return`<div class="flow-arrow">↓${s.label?'<span style="font-size:11px;color:var(--text3);margin-left:4px">'+s.label+'</span>':''}</div>`;
+return`<div class="flow-step ${s.type}">${s.label?'<div class="flow-label">'+s.label+'</div>':''}${s.text.replace(/\n/g,'<br>')}</div>`;
+}
+function showFlow(id,btn){
+document.querySelectorAll('#flowTabs .tab-btn').forEach(b=>b.classList.remove('active'));
+if(btn)btn.classList.add('active');
+document.getElementById('flowContent').innerHTML=FLOWS[id].map(renderFlowStep).join('');
+}
+function filterDrugs(cat,btn){
+document.querySelectorAll('#sec-drug .tab-bar .tab-btn').forEach(b=>b.classList.remove('active'));
+if(btn)btn.classList.add('active');
+const list=cat==='all'?DRUGS:DRUGS.filter(d=>d.cat.includes(cat));
+renderDrugList(list);
+}
+function renderDrugList(list){
+document.getElementById('drugList').innerHTML=list.map(d=>`
+<div class="drug-item" id="drug-${d.id}">
+<div class="drug-item-header" onclick="toggleDrug('${d.id}')">
+<div><div class="drug-name">${d.name}</div><div class="drug-sub">${d.sub}</div></div>
+<div style="text-align:right">${d.tags.slice(0,2).map(t=>`<span class="badge badge-blue">${t}</span>`).join('')}<div style="font-size:18px;color:var(--text3);margin-top:4px" id="chev-${d.id}">›</div></div>
+</div>
+<div class="drug-body" id="body-${d.id}">
+<table class="tbl" style="margin-bottom:10px"><tr><th>適應症</th><th>劑量</th><th>頻率/備註</th></tr>
+${d.indications.map(i=>`<tr><td>${i.ind}</td><td><strong>${i.dose}</strong></td><td style="font-size:12px">${i.freq}${i.note?'<br><em>'+i.note+'</em>':''}</td></tr>`).join('')}
+</table>
+${d.notes.map(n=>`<div class="alert alert-red" style="margin-bottom:6px;font-size:12px">${n}</div>`).join('')}
+${d.calcFields?renderCalc(d.id,d.calcFields):''}
+</div></div>`).join('');
+}
+function renderCalc(drugId,fields){
+return`<div class="dose-calc"><label>體重劑量計算</label>
+<div class="dose-calc-row"><input type="number" id="wt-${drugId}" placeholder="體重 (kg)" min="1" max="200" step="0.1"><button class="dose-calc-btn" onclick="calcDose('${drugId}')">計算</button></div>
+<div class="dose-result" id="result-${drugId}">${fields.map((f,i)=>`<div class="dose-result-item"><span class="dose-result-label">${f.label}</span><span class="dose-result-val" id="dval-${drugId}-${i}">—</span></div>`).join('')}</div>
+</div>`;
+}
+function calcDose(drugId){
+const drug=DRUGS.find(d=>d.id===drugId);
+const wt=parseFloat(document.getElementById('wt-'+drugId).value);
+if(!wt||wt<=0){alert('請輸入有效體重');return;}
+const resultEl=document.getElementById('result-'+drugId);
+resultEl.classList.add('show');
+drug.calcFields.forEach((f,i)=>{
+let val=wt*f.factor;
+if(f.max)val=Math.min(val,f.max);
+const display=val>=100?Math.round(val):Math.round(val*10)/10;
+document.getElementById(`dval-${drugId}-${i}`).textContent=display+' '+f.unit;
+});
+}
+function toggleDrug(id){
+const body=document.getElementById('body-'+id);
+const chev=document.getElementById('chev-'+id);
+if(body.classList.contains('open')){body.classList.remove('open');chev.style.transform='';}
+else{body.classList.add('open');chev.style.transform='rotate(90deg)';}
+}
+function showKB(id,btn){
+document.querySelectorAll('#kbTabs .tab-btn').forEach(b=>b.classList.remove('active'));
+if(btn)btn.classList.add('active');
+document.getElementById('kbContent').innerHTML=KB[id]||'';
+}
+function showExam(id,btn){
+document.querySelectorAll('#sec-exam .tab-bar .tab-btn').forEach(b=>b.classList.remove('active'));
+if(btn)btn.classList.add('active');
+const el=document.getElementById('examContent');
+if(id==='top15'){
+el.innerHTML=`<div class="card"><div class="card-body">${EXAM_TOP15.map((p,i)=>`<div class="exam-item"><div class="exam-num">${i+1}</div><div>${p}</div></div>`).join('')}</div></div>`;
+}else if(id==='numbers'){
+el.innerHTML=EXAM_NUMBERS.map(cat=>`<div class="sec-label">${cat.cat}</div><div class="card"><div class="card-body"><table class="tbl"><tr><th>考點</th><th>答案</th></tr>${cat.items.map(item=>`<tr><td>${item.q}</td><td><strong>${item.a}</strong></td></tr>`).join('')}</table></div></div>`).join('');
+}else if(id==='scenario'){
+el.innerHTML=`<div class="card"><div class="card-body">${EXAM_SCENARIOS.map((s,i)=>`<div class="exam-item"><div class="exam-num">${i+1}</div><div><div style="font-weight:600;margin-bottom:3px">${s.q}</div><div style="color:var(--primary-text)">${s.a}</div></div></div>`).join('')}</div></div>`;
+}else if(id==='traps'){
+el.innerHTML=`<div class="card"><div class="card-body">${TRAPS.map((t,i)=>`<div class="exam-item"><div class="exam-num" style="background:var(--danger-bg);color:var(--danger-text)">${i+1}</div><div>${t}</div></div>`).join('')}</div></div>`;
+}
+}
+function showMnemo(id,btn){
+document.querySelectorAll('#sec-mnemo .tab-bar .tab-btn').forEach(b=>b.classList.remove('active'));
+if(btn)btn.classList.add('active');
+const items=MNEMO[id]||[];
+document.getElementById('mnemoContent').innerHTML=items.map(m=>`<div class="mnemo-box"><div class="mnemo-title">${m.title}</div><div class="mnemo-text">${m.text.replace(/\n/g,'<br>')}</div></div>`).join('');
+}
+function renderUpdates(){
+document.getElementById('updateList').innerHTML=UPDATES.map(u=>`<div class="alert alert-${u.type}" style="margin-bottom:8px">${u.text}</div>`).join('');
+}
+let currentSection='sec-home';
+function goTo(secId){
+document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+document.getElementById(secId).classList.add('active');
+const navMap={'sec-home':'nav-home','sec-flow':'nav-flow','sec-drug':'nav-drug','sec-shock':'nav-home','sec-kb':'nav-home','sec-exam':'nav-exam','sec-mnemo':'nav-mnemo','sec-update':'nav-home','sec-search':'nav-home'};
+if(navMap[secId])document.getElementById(navMap[secId]).classList.add('active');
+document.getElementById('content').scrollTo(0,0);
+currentSection=secId;
+document.getElementById('searchInput').value='';
+}
+
+function buildSearchIndex(){
+const idx=[];
+DRUGS.forEach(d=>{
+const content=[d.name,d.sub,...d.tags,...d.indications.map(i=>i.ind+' '+i.dose+' '+i.note),...d.notes].join(' ');
+idx.push({title:d.name+'（'+d.sub+'）',content,tag:'藥物',action:()=>{goTo('sec-drug');setTimeout(()=>{const el=document.getElementById('body-'+d.id);if(el&&!el.classList.contains('open'))toggleDrug(d.id);document.getElementById('drug-'+d.id)?.scrollIntoView({behavior:'smooth'});},150);}});
+});
+EXAM_TOP15.forEach((p,i)=>idx.push({title:'考點 #'+(i+1),content:p,tag:'TOP 15考點',action:()=>{goTo('sec-exam');showExam('top15',null);}}));
+EXAM_NUMBERS.forEach(cat=>cat.items.forEach(item=>idx.push({title:item.q,content:item.a+' '+cat.cat,tag:'數字速記',action:()=>{goTo('sec-exam');showExam('numbers',null);}})));
+EXAM_SCENARIOS.forEach(s=>idx.push({title:s.q,content:s.a,tag:'情境判斷',action:()=>{goTo('sec-exam');showExam('scenario',null);}}));
+TRAPS.forEach((t,i)=>idx.push({title:'陷阱 #'+(i+1),content:t,tag:'常見陷阱',action:()=>{goTo('sec-exam');showExam('traps',null);}}));
+Object.values(MNEMO).flat().forEach(m=>idx.push({title:m.title,content:m.text,tag:'口訣速查',action:()=>goTo('sec-mnemo')}));
+UPDATES.forEach(u=>idx.push({title:'2025更新',content:u.text,tag:'2025更新',action:()=>goTo('sec-update')}));
+return idx;
+}
+let SEARCH_INDEX=[];
+let searchTimer;
+function handleSearch(q){
+clearTimeout(searchTimer);
+if(!q.trim()){goTo('sec-home');return;}
+searchTimer=setTimeout(()=>{
+document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+document.getElementById('sec-search').classList.add('active');
+const ql=q.toLowerCase();
+const hits=SEARCH_INDEX.filter(r=>(r.title+' '+r.content).toLowerCase().includes(ql)).slice(0,12);
+const el=document.getElementById('searchResults');
+if(!hits.length){el.innerHTML='<div class="empty-state">找不到「'+q+'」相關結果</div>';return;}
+el.innerHTML=hits.map((r,i)=>`<div class="search-result-item" onclick="SEARCH_INDEX[${SEARCH_INDEX.indexOf(r)}].action()"><div class="search-result-tag">${r.tag}</div><div class="search-result-title">${r.title}</div><div class="search-result-snippet">${r.content.slice(0,80)}...</div></div>`).join('');
+},200);
+}
+renderDrugList(DRUGS);
+renderUpdates();
+showFlow('vf',document.querySelector('#flowTabs .tab-btn'));
+showKB('rhythm',document.querySelector('#kbTabs .tab-btn'));
+showExam('top15',document.querySelector('#sec-exam .tab-bar .tab-btn'));
+showMnemo('cpr',document.querySelector('#sec-mnemo .tab-bar .tab-btn'));
+SEARCH_INDEX=buildSearchIndex();
+</script>
+</body>
+</html>
